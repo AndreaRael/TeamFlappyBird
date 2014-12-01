@@ -10,45 +10,77 @@ namespace FlappyBird
     {
         static void Main(string[] args)
         {
+            Console.Title = "BouncyBird";
+            //calls our new game, and play game function
             Game newGame = new Game();
             newGame.PlayGame();
         }
     }
 
-    
+    //creates our object class
     class Object
     {
+        //color property
         public ConsoleColor Color { get; set; }
+        //symbol property
         public string Symbol { get; set; }
+        //x and y coordinates
         public int X { get; set; }
         public int Y { get; set; }
+        //determines if it is a hole
         public bool isHole { get; set; }
 
+        //new rng var
         Random rng = new Random();
-
+        //constructor that does not require overloads
+        //not used but could be used in the future
         public Object()
         {
+            //sets color to green by default
             this.Color = ConsoleColor.Green;
+            //symbol is a wall
             this.Symbol = "|";
+            //starts two away from window width
             this.X = Console.WindowWidth - 2;
+            //begins at top
             this.Y = 0;
+            //it is not a hole
             this.isHole = false;
         }
 
+        //another constructor that takes y coordinate
+        //and bool of wether object is a hole
         public Object(int y, bool isHole)
         {
-            //If wall....
-            this.Color = ConsoleColor.Green;
-            this.Symbol = "|";
-            this.X = Console.WindowWidth - 2;
-            this.Y = y;
-            this.isHole = false;
+            //if it is a wall
+            if (!isHole)
+            {
+                //color is green, symbol is |, is hole is false
+                this.Color = ConsoleColor.Green;
+                this.Symbol = "|";
+                this.X = Console.WindowWidth - 2;
+                this.Y = y;
+                this.isHole = false;
+            }
             
             //If hole...
-        }
+            if (isHole)
+            {
+                //color is black, symbol is space
+                this.Color = ConsoleColor.Black;
+                this.Symbol = " ";
+                this.X = Console.WindowWidth - 2;
+                this.Y = y;
+                //is hole set to true
+                this.isHole = true;
+            }
 
+
+        }
+        //constructor that takes color, x and y values, symbol, and wallstatus
         public Object(ConsoleColor Color, int x, int y, string Symbol, bool WallStatus)
         {
+            //sets those values accordingly
             this.Color = Color;
             this.Symbol = Symbol;
             this.X = x;
@@ -56,7 +88,7 @@ namespace FlappyBird
             this.isHole = WallStatus;
 
         }
-
+        //draws our objects
         public void Draw()
         {
             //draws the unit based on x and y, sets the color to color default, and writes the symbol
@@ -67,23 +99,33 @@ namespace FlappyBird
         }
     }
 
+
+    //class for our game
     class Game
     {
+        //create our bird of type object
         public Object FlappyBird { get; set; }
+        //list to hold our objects
         public List<Object> WallList { get; set; }
+        //value for our score
         public int Score { get; set; }
+        //value for whether or not bird is dead
         public bool isDead { get; set; }
+        //not used, but can adjust speed if necessary
         public int Speed { get; set; }
 
+        //new rng generator
         Random rng = new Random();
 
+        //game constructor
         public Game()
         {
-
+            //window height and width, along with buffer
             Console.WindowWidth = 60;
             Console.BufferWidth = 60;
             Console.WindowHeight = 30;
             Console.BufferHeight = 30;
+            // creates a new flappy bird, color yellow, x cordinate, y coordinate, symbol, and if it is a hole
             this.FlappyBird = new Object(ConsoleColor.Yellow, 5, Console.WindowHeight / 2, ">", false);
             this.WallList = new List<Object>();
             this.Score = 0;
@@ -93,141 +135,300 @@ namespace FlappyBird
 
         public void PlayGame()
         {
+            //create var to alter wall intervals
+            var createWallsAtInterval = 20;
+            var interval = 19;
+            //greets players
+            Greeting();
+
+            //while we arent dead
             while (!isDead)
             {
-                //create counter to keep spaces
-                //then only create wall after counter count
-                CreateWall();
+                //while the wall counter is greater than the interval
+                if (createWallsAtInterval > interval)
+                {
+                    //create wall
+                    CreateWall();
+                    //if score is greater than 15
+                    if (Score > 15)
+                    {
+                        //reduce the wall intervall
+                        interval = 14;
+                    }
+                    //greater than 25
+                    if (Score > 25)
+                    {
+                        //reduce wall interval again
+                        interval = 9;
+                    }
+                    //greater than 35
+                    if (Score > 35)
+                    {
+                        //reduce wall interval a final time
+                        interval = 7;
+                    }
+                    //resets wall counter to 0
+                    createWallsAtInterval = 0;
+
+                }
+                //moves bird
                 MoveBird();
+                //moves wall
                 MoveObstacles();
+                //draws game
                 DrawGame();
+                //adds to wall counter
+                createWallsAtInterval++;
+                //sleeps so as to control wall speed
                 System.Threading.Thread.Sleep(170);
 
             }
+            //tells player they died and score
+            ExitGreeting();
         }
-
+        //creates wall
         public void CreateWall()
         {
-            //Genereate a number between 0 and 25
+            //rng for our hole in wall
+            var holeInWall = rng.Next(26);
+            
+            //loop through filling wall with objects
             for (int i = 0; i < 29; i++)
             {
-                //If i is NOT between generated number and generated number + 3, then....
-                WallList.Add(new Object(29 - i, true));
-                //Otherwise...
-                //Wallist.Add(new Object(29 - i, false)
+                //If i is between generated number and generated number + 7, then....
+                if (i > holeInWall
+                    && i < holeInWall + 7)
+                {
+                    //add hole in wall, 8 spaces high
+                    WallList.Add(new Object(29 - i, true));
+                }
+           
+                else
+                {
+                    //add wall object
+                    WallList.Add(new Object(29 - i, false));
+                }
+                
               
             }
 
-            //int holePlacement = rng.Next(Console.WindowHeight-1);
-
-            //Object hole = new Object(ConsoleColor.Black, Console.WindowWidth - 2, holePlacement, " ", true);
-            
-            //if (!(hole.Y > Console.WindowHeight - 5))
-            //{
-            //    holePlacement = rng.Next(Console.WindowHeight - 1);
-
-            //    hole = new Object(ConsoleColor.Black, Console.WindowWidth - 2, holePlacement, " ", true); 
-            //}
-            //else
-            //{
-            //    for (int i = 0; i < 4; i++)
-            //    {
-            //        WallList.Add(hole);
-            //        hole.Y--;
-                
-            //    }
-            //}
-
-
         }
-
+        //moves obstacles
         public void MoveObstacles()
         {
-
-            
-
+            //for each item in walllist
             foreach (Object wall in WallList)
             {
+                //decrease x position 
                 wall.X--;
-
+                //if bird goes through hole
                 if (wall.isHole
                     && wall.X == FlappyBird.X
                     && wall.Y == FlappyBird.Y)
                 {
-                    Score += 1;
+                    //if score is less than 15
+                    if (Score < 15)
+                    {
+                        Score += 1;
+                    }
+                        //if less than 25 but greater than 15
+                    else if (Score < 25
+                        && Score >= 15)
+                    {
+                        Score += 2;
+                    }
+                        //otherwise
+                    else
+                    {
+                        Score += 3;
+                    }
+                    //is not dead
                     isDead = false;
                 }
-                if (wall.X == FlappyBird.X
+                    //if it is not a whole
+                else if (!wall.isHole
+                    && wall.X == FlappyBird.X
                     && wall.Y == FlappyBird.Y)
                 {
+                    //bird is dead
                     isDead = true;
                 }
             }
-
+            //orders list where the X cord is greater than 0
             WallList = WallList.Where(x => x.X > 0).ToList();
         }
 
         public void MoveBird()
         {
-            if (Console.KeyAvailable)
+            //moves bird as long as it is in params
+            if (FlappyBird.X > 1
+                && FlappyBird.X < Console.WindowWidth -1
+                && FlappyBird.Y > 1
+                && FlappyBird.Y < Console.WindowHeight -1)
             {
-                ConsoleKey keyPressed = Console.ReadKey().Key;
+                //if a key is pressed
+                if (Console.KeyAvailable)
+                {
+                    //read it and assign it to var
+                    ConsoleKey keyPressed = Console.ReadKey().Key;
+                    //while it is available
+                    while (Console.KeyAvailable)
+                    {
+                        //readkey with true so it doesnt echo input
+                        Console.ReadKey(true);
 
-                while (Console.KeyAvailable)
-                {
-                    Console.ReadKey(true);
-
+                    }
+                    //if up is pressed
+                    if (keyPressed == ConsoleKey.UpArrow
+                            && FlappyBird.Y < (Console.WindowHeight))
+                    {
+                            //decrease y by 2
+                            FlappyBird.Y -= 2;
+                        
+                    }
+                        //if down
+                    else if (keyPressed == ConsoleKey.DownArrow
+                        && FlappyBird.Y > 0)
+                    {
+                       
+                            //increase y by 2
+                            FlappyBird.Y += 2;
+                        
+                    }
+                        //if right
+                    else if (keyPressed == ConsoleKey.RightArrow
+                        && FlappyBird.X < Console.WindowWidth)
+                    {
+                        //increase x by 1
+                        FlappyBird.X += 1;
+                    }
+                        //if left
+                    else if (keyPressed == ConsoleKey.LeftArrow
+                        && FlappyBird.X > 0)
+                    {
+                        //decrease by 2
+                        FlappyBird.X -= 2;
+                    }
+                    else
+                    {
+                        //otherwise display invalid move
+                        Console.WriteLine("Invalid Move");
+                    }
                 }
-                if (keyPressed == ConsoleKey.UpArrow
-                        && FlappyBird.Y < (Console.WindowHeight))
+                    //if a key is not available
+                else if (!(Console.KeyAvailable))
                 {
-                    FlappyBird.Y--;
-                }
-                else if (keyPressed == ConsoleKey.DownArrow
-                    && FlappyBird.Y > 0)
-                {
+                    //fall down
                     FlappyBird.Y++;
                 }
-                else if (keyPressed == ConsoleKey.RightArrow
-                    && FlappyBird.X < Console.WindowWidth)
+            }
+                //if flappy bird is at the edge of boundaries
+            else
+            {
+                //if it is at the top
+                if (FlappyBird.Y <= 1)
                 {
+                    //make it bounce down
+                    FlappyBird.Y++;
+                }
+                    //if it is at the bottom
+                else if (FlappyBird.Y >= Console.WindowHeight - 1)
+                {
+                    //make it bounce up
+                    FlappyBird.Y--;
+
+                }
+                    //if it is against the wall
+                else if (FlappyBird.X <= 1)
+                {
+                    //make it bounce forward
                     FlappyBird.X++;
                 }
-                else if (keyPressed == ConsoleKey.LeftArrow
-                    && FlappyBird.X > 0)
-                {
-                    FlappyBird.X--;
-                }
-                else
-                {
-                    Console.WriteLine("Invalid Move");
-                }
-            }
-            else if (!(Console.KeyAvailable))
-            {
-                FlappyBird.Y++;
             }
         }
-
+        //draws game
         public void DrawGame()
         {
+            //clears console
             Console.Clear();
+            //draws flappybird object
             FlappyBird.Draw();
-
+            //for every wall in list
             foreach (Object wall in WallList)
             {
+                //draws wall
                 wall.Draw();
             }
-            PrintAtPosition(20, 2, "Score: " + this.Score, ConsoleColor.Green);
+            //prints score in same place
+            PrintAtPosition(20, 2, "Score: " + this.Score, ConsoleColor.Red);
             //PrintAtPosition(20, 3, "Speed:" + this.Speed, ConsoleColor.Green);
 
         }
-
+        //prints score
         public void PrintAtPosition(int x, int y, string text, ConsoleColor color)
         {
+            //sets the cursor and text
             Console.SetCursorPosition(x, y);
             Console.ForegroundColor = color;
             Console.Write(text);
+
+        }
+
+        public void Greeting()
+        {
+            Console.WriteLine(@"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░████████████░░░░░░░░░░░░
+░░░░░░░░░████░░░░░░██░░░░██░░░░░░░░░░
+░░░░░░░██░░░░░░░░██░░░░░░░░██░░░░░░░░
+░░░████████░░░░░░██░░░░░░██░░██░░░░░░
+░░█░░░░░░░░██░░░░██░░░░░░██░░██░░░░░░
+░░█░░░░░░░░░░██░░░░██░░░░░░░░██░░░░░░
+░░█▒▒░░░░░░▒▒██░░░░░░████████████░░░░
+░░░██▒▒▒▒▒▒██░░░░░░██▓▓▓▓▓▓▓▓▓▓▓▓██░░
+░░░░░██████▒▒▒▒▒▒██▓▓████████████░░░░
+░░░░░██▒▒▒▒▒▒▒▒▒▒▒▒██▓▓▓▓▓▓▓▓▓▓██░░░░
+░░░░░░░████▒▒▒▒▒▒▒▒▒▒███████████░░░░░
+░░░░░░░░░░░██████████░░░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
+            Console.WriteLine("\n\nWelcome to BouncyBird!\n\nCertainly not to be confused with FlappyBird.\nThe object of the game is simple:" +
+            "\nFly your little bird through the gaps in the wall.\nUse the up, down, left, and right arrows to flap your wings.\nIf you don't you'll fall like a stone.\nYou will bounce off of boundary walls,\nand get " +
+            "a point for each hole you fly through.\nBut be warned!\nThe higher your score, the closer the walls will get!\n\n\nPress enter to play!");
+            Console.ReadLine();
+            
+
+        }
+
+        public void ExitGreeting()
+        {
+            Console.Clear();
+            Console.WriteLine(@"┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+███▀▀▀██┼███▀▀▀███┼███▀█▄█▀███┼██▀▀▀
+██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼█┼┼┼██┼██┼┼┼
+██┼┼┼▄▄▄┼██▄▄▄▄▄██┼██┼┼┼▀┼┼┼██┼██▀▀▀
+██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██┼┼┼
+███▄▄▄██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██▄▄▄
+┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+███▀▀▀███┼▀███┼┼██▀┼██▀▀▀┼██▀▀▀▀██▄┼
+██┼┼┼┼┼██┼┼┼██┼┼██┼┼██┼┼┼┼██┼┼┼┼┼██┼
+██┼┼┼┼┼██┼┼┼██┼┼██┼┼██▀▀▀┼██▄▄▄▄▄▀▀┼
+██┼┼┼┼┼██┼┼┼██┼┼█▀┼┼██┼┼┼┼██┼┼┼┼┼██┼
+███▄▄▄███┼┼┼─▀█▀┼┼─┼██▄▄▄┼██┼┼┼┼┼██▄
+┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼████▄┼┼┼▄▄▄▄▄▄▄┼┼┼▄████┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼▀▀█▄█████████▄█▀▀┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼█████████████┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼██▀▀▀███▀▀▀██┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼██┼┼┼███┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼█████▀▄▀█████┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼┼███████████┼┼┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼▄▄▄██┼┼█▀█▀█┼┼██▄▄▄┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼▀▀██┼┼┼┼┼┼┼┼┼┼┼██▀▀┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼
+┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼");
+
+            Console.WriteLine("\nYou have crashed into a wall. Poor little fella.\nYour final score was: {0}\n\nToo bad you weren't a phoenix.", Score);
+            Console.ReadLine();
 
         }
 
