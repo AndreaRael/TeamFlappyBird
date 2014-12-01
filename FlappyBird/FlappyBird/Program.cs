@@ -284,6 +284,7 @@ namespace FlappyBird
                     {
                             //decrease y by 2
                             FlappyBird.Y -= 2;
+                            this.FlappyBird.Symbol = "^";
                         
                     }
                         //if down
@@ -293,6 +294,7 @@ namespace FlappyBird
                        
                             //increase y by 2
                             FlappyBird.Y += 2;
+                            this.FlappyBird.Symbol = "▼";
                         
                     }
                         //if right
@@ -301,6 +303,7 @@ namespace FlappyBird
                     {
                         //increase x by 1
                         FlappyBird.X += 1;
+                        FlappyBird.Symbol = ">";
                     }
                         //if left
                     else if (keyPressed == ConsoleKey.LeftArrow
@@ -308,6 +311,7 @@ namespace FlappyBird
                     {
                         //decrease by 2
                         FlappyBird.X -= 2;
+                        FlappyBird.Symbol = "<";
                     }
                     else
                     {
@@ -320,6 +324,7 @@ namespace FlappyBird
                 {
                     //fall down
                     FlappyBird.Y++;
+                    FlappyBird.Symbol = "▼";
                 }
             }
                 //if flappy bird is at the edge of boundaries
