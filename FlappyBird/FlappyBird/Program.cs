@@ -29,6 +29,9 @@ namespace FlappyBird
         public int Y { get; set; }
         //determines if it is a hole
         public bool isHole { get; set; }
+        public bool isPowerUp { get; set; }
+        public bool isGhostPowerUp { get; set; }
+        
 
         //new rng var
         Random rng = new Random();
@@ -46,6 +49,7 @@ namespace FlappyBird
             this.Y = 0;
             //it is not a hole
             this.isHole = false;
+            this.isPowerUp = false;
         }
 
         //another constructor that takes y coordinate
@@ -77,6 +81,17 @@ namespace FlappyBird
 
 
         }
+        public Object(int y, ConsoleColor color, string symbol, bool isPowerUp, bool isGhostPowerUp)
+        {
+            this.Symbol = symbol;
+            this.Color = color;
+            this.X = Console.WindowWidth - 2;
+            this.Y = y;
+            this.isHole = false;
+            this.isPowerUp = isPowerUp;
+            this.isGhostPowerUp = isGhostPowerUp;
+        }
+
         //constructor that takes color, x and y values, symbol, and wallstatus
         public Object(ConsoleColor Color, int x, int y, string Symbol, bool WallStatus)
         {
@@ -113,6 +128,7 @@ namespace FlappyBird
         public bool isDead { get; set; }
         //not used, but can adjust speed if necessary
         public int Speed { get; set; }
+        public int ghostLives { get; set; }
 
         //new rng generator
         Random rng = new Random();
@@ -131,6 +147,7 @@ namespace FlappyBird
             this.Score = 0;
             this.isDead = false;
             this.Speed = 0;
+            this.ghostLives = 0;
         }
 
         public void PlayGame()
@@ -207,9 +224,62 @@ namespace FlappyBird
                 {
                     //add wall object
                     WallList.Add(new Object(29 - i, false));
+
+                    
                 }
                 
               
+            }
+            var chanceOfPowerUp = rng.Next(100);
+            if (Score > 15)
+            {
+
+
+                if (chanceOfPowerUp > 50)
+                {
+                    var powerUpPlacement = rng.Next(27);
+                    if (WallList[powerUpPlacement].isPowerUp
+                        && WallList[powerUpPlacement + 1].isPowerUp
+                        && WallList[powerUpPlacement + 2].isPowerUp
+                        && WallList[powerUpPlacement].isHole
+                        && WallList[powerUpPlacement + 1].isHole
+                        && WallList[powerUpPlacement + 2].isHole)
+                    {
+                        powerUpPlacement = rng.Next(27);
+                    }
+                    else
+                    {
+
+                        WallList.Add(new Object(powerUpPlacement, ConsoleColor.Red, "@", true, false));
+                        WallList.Add(new Object(powerUpPlacement + 1, ConsoleColor.Red, "@", true, false));
+                        WallList.Add(new Object(powerUpPlacement + 2, ConsoleColor.Red, "@", true, false));
+                    }
+                }
+            }
+            if (Score > 25)
+            {
+
+
+                if (chanceOfPowerUp > 55)
+                {
+                    var powerUpPlacement = rng.Next(27);
+                    if (WallList[powerUpPlacement].isPowerUp
+                        && WallList[powerUpPlacement + 1].isPowerUp
+                        && WallList[powerUpPlacement + 2].isPowerUp
+                        && WallList[powerUpPlacement].isHole
+                        && WallList[powerUpPlacement + 1].isHole
+                        && WallList[powerUpPlacement + 2].isHole
+                        )
+                    {
+                        powerUpPlacement = rng.Next(27);
+                    }
+                    else
+                    {
+                        WallList.Add(new Object(powerUpPlacement, ConsoleColor.White, "]", false, true));
+                        WallList.Add(new Object(powerUpPlacement + 1, ConsoleColor.White, "]", false, true));
+                        WallList.Add(new Object(powerUpPlacement + 2, ConsoleColor.White, "]", false, true));
+                    }
+                }
             }
 
         }
@@ -245,14 +315,40 @@ namespace FlappyBird
                     //is not dead
                     isDead = false;
                 }
+                else if (wall.isPowerUp
+                    && wall.X == FlappyBird.X
+                    && wall.Y == FlappyBird.Y)
+                {
+                    isDead = false;
+                    Score += 10;
+
+                }
+                else if(wall.isGhostPowerUp
+                    && wall.X == FlappyBird.X
+                    && wall.Y == FlappyBird.Y)
+                {
+                    ghostLives++;
+                    isDead = false;
+
+                }
                     //if it is not a whole
                 else if (!wall.isHole
                     && wall.X == FlappyBird.X
                     && wall.Y == FlappyBird.Y)
                 {
-                    //bird is dead
-                    isDead = true;
+                    if (ghostLives == 0)
+                    {
+                        //bird is dead
+                        isDead = true;
+                    }
+                    else
+                    {
+                        ghostLives--;
+                        isDead = false;
+                    }
                 }
+
+                
             }
             //orders list where the X cord is greater than 0
             WallList = WallList.Where(x => x.X > 0).ToList();
@@ -356,6 +452,21 @@ namespace FlappyBird
         {
             //clears console
             Console.Clear();
+            var ghostNoticeTimer = 5;
+            if (ghostLives > 0)
+            {
+                Console.BackgroundColor = ConsoleColor.Black;
+                if (ghostNoticeTimer > 0)
+                {
+                    PrintAtPosition(20, 1, "Welcome to Ghost World!", ConsoleColor.Red);
+                    
+                }
+                ghostNoticeTimer--;
+            }
+            else
+            {
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+            }
             //draws flappybird object
             FlappyBird.Draw();
             //for every wall in list
@@ -366,7 +477,8 @@ namespace FlappyBird
             }
             //prints score in same place
             PrintAtPosition(20, 2, "Score: " + this.Score, ConsoleColor.Red);
-            //PrintAtPosition(20, 3, "Speed:" + this.Speed, ConsoleColor.Green);
+            PrintAtPosition(20, 3, "Ghost Lives: " + this.ghostLives, ConsoleColor.Red);
+
 
         }
         //prints score
@@ -381,21 +493,21 @@ namespace FlappyBird
 
         public void Greeting()
         {
-            Console.WriteLine(@"░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░████████████░░░░░░░░░░░░
-░░░░░░░░░████░░░░░░██░░░░██░░░░░░░░░░
-░░░░░░░██░░░░░░░░██░░░░░░░░██░░░░░░░░
-░░░████████░░░░░░██░░░░░░██░░██░░░░░░
-░░█░░░░░░░░██░░░░██░░░░░░██░░██░░░░░░
-░░█░░░░░░░░░░██░░░░██░░░░░░░░██░░░░░░
-░░█▒▒░░░░░░▒▒██░░░░░░████████████░░░░
-░░░██▒▒▒▒▒▒██░░░░░░██▓▓▓▓▓▓▓▓▓▓▓▓██░░
-░░░░░██████▒▒▒▒▒▒██▓▓████████████░░░░
-░░░░░██▒▒▒▒▒▒▒▒▒▒▒▒██▓▓▓▓▓▓▓▓▓▓██░░░░
-░░░░░░░████▒▒▒▒▒▒▒▒▒▒███████████░░░░░
-░░░░░░░░░░░██████████░░░░░░░░░░░░░░░░
-░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
-            Console.WriteLine("\n\nWelcome to BouncyBird!\n\nCertainly not to be confused with FlappyBird.\nThe object of the game is simple:" +
+            Console.WriteLine(@"         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+         ░░░░░░░░░░░░░████████████░░░░░░░░░░░░
+         ░░░░░░░░░████░░░░░░██░░░░██░░░░░░░░░░
+         ░░░░░░░██░░░░░░░░██░░░░░░░░██░░░░░░░░
+         ░░░████████░░░░░░██░░░░░░██░░██░░░░░░
+         ░░█░░░░░░░░██░░░░██░░░░░░██░░██░░░░░░
+         ░░█░░░░░░░░░░██░░░░██░░░░░░░░██░░░░░░
+         ░░█▒▒░░░░░░▒▒██░░░░░░████████████░░░░
+         ░░░██▒▒▒▒▒▒██░░░░░░██▓▓▓▓▓▓▓▓▓▓▓▓██░░
+         ░░░░░██████▒▒▒▒▒▒██▓▓████████████░░░░
+         ░░░░░██▒▒▒▒▒▒▒▒▒▒▒▒██▓▓▓▓▓▓▓▓▓▓██░░░░
+         ░░░░░░░████▒▒▒▒▒▒▒▒▒▒███████████░░░░░
+         ░░░░░░░░░░░██████████░░░░░░░░░░░░░░░░
+         ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░");
+            LoopWords("\n\nWelcome to BouncyBird!\n\nCertainly not to be confused with FlappyBird.\nThe object of the game is simple:" +
             "\nFly your little bird through the gaps in the wall.\nUse the up, down, left, and right arrows to flap your wings.\nIf you don't you'll fall like a stone.\nYou will bounce off of boundary walls,\nand get " +
             "a point for each hole you fly through.\nBut be warned!\nThe higher your score, the closer the walls will get!\n\n\nPress enter to play!");
             Console.ReadLine();
@@ -406,35 +518,47 @@ namespace FlappyBird
         public void ExitGreeting()
         {
             Console.Clear();
-            Console.WriteLine(@"┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
-███▀▀▀██┼███▀▀▀███┼███▀█▄█▀███┼██▀▀▀
-██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼█┼┼┼██┼██┼┼┼
-██┼┼┼▄▄▄┼██▄▄▄▄▄██┼██┼┼┼▀┼┼┼██┼██▀▀▀
-██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██┼┼┼
-███▄▄▄██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██▄▄▄
-┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
-███▀▀▀███┼▀███┼┼██▀┼██▀▀▀┼██▀▀▀▀██▄┼
-██┼┼┼┼┼██┼┼┼██┼┼██┼┼██┼┼┼┼██┼┼┼┼┼██┼
-██┼┼┼┼┼██┼┼┼██┼┼██┼┼██▀▀▀┼██▄▄▄▄▄▀▀┼
-██┼┼┼┼┼██┼┼┼██┼┼█▀┼┼██┼┼┼┼██┼┼┼┼┼██┼
-███▄▄▄███┼┼┼─▀█▀┼┼─┼██▄▄▄┼██┼┼┼┼┼██▄
-┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼████▄┼┼┼▄▄▄▄▄▄▄┼┼┼▄████┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼▀▀█▄█████████▄█▀▀┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼█████████████┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼██▀▀▀███▀▀▀██┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼██┼┼┼███┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼█████▀▄▀█████┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼┼███████████┼┼┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼▄▄▄██┼┼█▀█▀█┼┼██▄▄▄┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼▀▀██┼┼┼┼┼┼┼┼┼┼┼██▀▀┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼
-┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼");
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.Clear();
+            Console.WriteLine(@"            ┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+            ███▀▀▀██┼███▀▀▀███┼███▀█▄█▀███┼██▀▀▀
+            ██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼█┼┼┼██┼██┼┼┼
+            ██┼┼┼▄▄▄┼██▄▄▄▄▄██┼██┼┼┼▀┼┼┼██┼██▀▀▀
+            ██┼┼┼┼██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██┼┼┼
+            ███▄▄▄██┼██┼┼┼┼┼██┼██┼┼┼┼┼┼┼██┼██▄▄▄
+            ┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+            ███▀▀▀███┼▀███┼┼██▀┼██▀▀▀┼██▀▀▀▀██▄┼
+            ██┼┼┼┼┼██┼┼┼██┼┼██┼┼██┼┼┼┼██┼┼┼┼┼██┼
+            ██┼┼┼┼┼██┼┼┼██┼┼██┼┼██▀▀▀┼██▄▄▄▄▄▀▀┼
+            ██┼┼┼┼┼██┼┼┼██┼┼█▀┼┼██┼┼┼┼██┼┼┼┼┼██┼
+            ███▄▄▄███┼┼┼─▀█▀┼┼─┼██▄▄▄┼██┼┼┼┼┼██▄
+            ┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼██┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼████▄┼┼┼▄▄▄▄▄▄▄┼┼┼▄████┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼▀▀█▄█████████▄█▀▀┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼█████████████┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼██▀▀▀███▀▀▀██┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼██┼┼┼███┼┼┼██┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼█████▀▄▀█████┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼┼███████████┼┼┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼▄▄▄██┼┼█▀█▀█┼┼██▄▄▄┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼▀▀██┼┼┼┼┼┼┼┼┼┼┼██▀▀┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼▀▀┼┼┼┼┼┼┼┼┼┼┼
+            ┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼┼");
 
-            Console.WriteLine("\nYou have crashed into a wall. Poor little fella.\nYour final score was: {0}\n\nToo bad you weren't a phoenix.", Score);
+            LoopWords("\nYou have crashed into a wall. Poor little fella.");
+            Console.WriteLine("\nYour final score was: {0}\n\nToo bad you weren't a phoenix.", Score);
             Console.ReadLine();
 
+        }
+
+        public void LoopWords(string stringToLoop)
+        {
+            foreach (Char letter in stringToLoop)
+            {
+                Console.Write(letter);
+                System.Threading.Thread.Sleep(30);
+            }
         }
 
     }
